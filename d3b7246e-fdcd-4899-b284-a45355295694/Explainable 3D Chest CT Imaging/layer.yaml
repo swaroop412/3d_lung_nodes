@@ -24,6 +24,23 @@ blocks:
 - auto_size: false
   canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
   compute_settings: null
+  description: Packages 3D CT inference API deployment files (Dockerfile, FastAPI
+    server, requirements, docker-compose) into compressed ZIP archive for distribution
+  height: 1000
+  id: 41ed134f-0ca8-499a-bf29-d6524651946b
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  name: package_deployment_archive
+  parent_id: null
+  properties: {}
+  status: 3
+  type: 1
+  variables: null
+  width: 1600
+  x: 10000
+  y: 2800
+- auto_size: false
+  canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  compute_settings: null
   description: Trains 3D ResNet on balanced kidney/background patches, runs 10-epoch
     training with validation, logs metrics, saves weights to disk, and generates loss/accuracy
     visualizations
@@ -94,6 +111,24 @@ blocks:
 - auto_size: false
   canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
   compute_settings: null
+  description: Generates 7 Docker deployment artifacts for 3D CT medical imaging API
+    including Dockerfile, FastAPI main.py, requirements.txt, docker-compose.yml, deploy
+    shell script, and README documentation
+  height: 1000
+  id: aedb0282-88aa-4ed8-9fd0-745abf3b7f8b
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  name: generate_deployment_artifacts
+  parent_id: null
+  properties: {}
+  status: 3
+  type: 1
+  variables: null
+  width: 1600
+  x: 8000
+  y: 2800
+- auto_size: false
+  canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  compute_settings: null
   description: Generates 3D Grad-CAM visualizations showing neural network decision
     regions on CT scans with heatmap overlays on 3 axial slices, plus peak activation
     coordinates
@@ -116,6 +151,11 @@ edges:
   source: 4485b3ce-d980-4950-b9dd-17c2e5b82eb0
   target: 9c451a64-4685-45e0-b100-6ffd92e70150
 - canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  id: 5e63020c-69b2-4a1f-9df9-dc8aab2796f0
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  source: 9c451a64-4685-45e0-b100-6ffd92e70150
+  target: aedb0282-88aa-4ed8-9fd0-745abf3b7f8b
+- canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
   id: 669f8b7b-a48c-4f3d-9477-a19c65617d42
   layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
   source: 5bb2342e-0ba5-4586-9210-1cf2ddf3151e
@@ -125,6 +165,11 @@ edges:
   layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
   source: 4485b3ce-d980-4950-b9dd-17c2e5b82eb0
   target: 7d1f281b-0393-4ade-961a-e6dc3ae5e03b
+- canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  id: 75c9827b-ae9c-4043-83d0-9e9fa46bb43c
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  source: aedb0282-88aa-4ed8-9fd0-745abf3b7f8b
+  target: 41ed134f-0ca8-499a-bf29-d6524651946b
 - canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
   id: b88d957b-c215-4b67-94c3-2b85da452893
   layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
