@@ -1,0 +1,137 @@
+id: ba5c93b0-6573-43b3-ae04-74c40970d713
+name: Explainable 3D Chest CT Imaging
+type: 1
+canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+blocks:
+- auto_size: false
+  canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  compute_settings: null
+  description: 'Loads chest CT NIfTI files and applies medical imaging preprocessing:
+    HU windowing (lung window), normalization to [0,1], and resampling to 1mm isotropic
+    voxel spacing'
+  height: 1000
+  id: 09d3f90d-b40e-4217-9d28-3a18db22bb05
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  name: load_and_preprocess_kits19
+  parent_id: null
+  properties: {}
+  status: 3
+  type: 1
+  variables: null
+  width: 1600
+  x: 0
+  y: 0
+- auto_size: false
+  canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  compute_settings: null
+  description: Trains 3D ResNet on balanced kidney/background patches, runs 10-epoch
+    training with validation, logs metrics, saves weights to disk, and generates loss/accuracy
+    visualizations
+  height: 1000
+  id: 4485b3ce-d980-4950-b9dd-17c2e5b82eb0
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  name: train_3d_resnet
+  parent_id: null
+  properties: {}
+  status: 3
+  type: 1
+  variables: null
+  width: 1600
+  x: 4000
+  y: 0
+- auto_size: false
+  canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  compute_settings: null
+  description: "Extracts 64\xB3 voxel 3D patches from kidney CT volume, samples up\
+    \ to 50 patches from annotated regions, assigns kidney/tumor labels based on dominant\
+    \ segment"
+  height: 1000
+  id: 5bb2342e-0ba5-4586-9210-1cf2ddf3151e
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  name: extract_3d_patches
+  parent_id: null
+  properties: {}
+  status: 3
+  type: 1
+  variables: null
+  width: 1600
+  x: 2000
+  y: 0
+- auto_size: false
+  canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  compute_settings: null
+  description: Evaluates 3D ResNet on validation set & generates clinical metrics
+    with ROC/confusion matrix plots
+  height: 1000
+  id: 7d1f281b-0393-4ade-961a-e6dc3ae5e03b
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  name: evaluate_3d_resnet
+  parent_id: null
+  properties: {}
+  status: 3
+  type: 1
+  variables: null
+  width: 1600
+  x: 6000
+  y: 0
+- auto_size: false
+  canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  compute_settings: null
+  description: Deploys FastAPI inference server with web UI for kidney/tissue classification
+    from 3D CT scans using ResNet model with Grad-CAM explainability visualization
+  height: 1000
+  id: 9c451a64-4685-45e0-b100-6ffd92e70150
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  name: fastapi_inference_server
+  parent_id: null
+  properties: {}
+  status: 3
+  type: 1
+  variables: null
+  width: 1600
+  x: 6000
+  y: 2800
+- auto_size: false
+  canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  compute_settings: null
+  description: Generates 3D Grad-CAM visualizations showing neural network decision
+    regions on CT scans with heatmap overlays on 3 axial slices, plus peak activation
+    coordinates
+  height: 1000
+  id: c95532fe-df5a-4a58-b527-94f9d93a5706
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  name: gradcam_3d
+  parent_id: null
+  properties: {}
+  status: 3
+  type: 1
+  variables: null
+  width: 1600
+  x: 6000
+  y: 1400
+edges:
+- canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  id: 574d3f4b-9674-446d-b4b2-0e43e10ef3d5
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  source: 4485b3ce-d980-4950-b9dd-17c2e5b82eb0
+  target: 9c451a64-4685-45e0-b100-6ffd92e70150
+- canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  id: 669f8b7b-a48c-4f3d-9477-a19c65617d42
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  source: 5bb2342e-0ba5-4586-9210-1cf2ddf3151e
+  target: 4485b3ce-d980-4950-b9dd-17c2e5b82eb0
+- canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  id: 7270f4ad-fcc3-4670-b765-96241a120175
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  source: 4485b3ce-d980-4950-b9dd-17c2e5b82eb0
+  target: 7d1f281b-0393-4ade-961a-e6dc3ae5e03b
+- canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  id: b88d957b-c215-4b67-94c3-2b85da452893
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  source: 09d3f90d-b40e-4217-9d28-3a18db22bb05
+  target: 5bb2342e-0ba5-4586-9210-1cf2ddf3151e
+- canvas_id: d3b7246e-fdcd-4899-b284-a45355295694
+  id: d14c9f93-8a9d-4caa-84ca-b34f53f30fed
+  layer_id: ba5c93b0-6573-43b3-ae04-74c40970d713
+  source: 4485b3ce-d980-4950-b9dd-17c2e5b82eb0
+  target: c95532fe-df5a-4a58-b527-94f9d93a5706

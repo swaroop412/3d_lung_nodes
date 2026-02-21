@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explainable 3D Chest CT Imaging</title>
+    <style>
+        :root { --primary-color: #0d6efd; --light-gray: #f8f9fa; --gray: #dee2e6; --dark-gray: #6c757d; --text-color: #212529; --success: #198754; --danger: #dc3545; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--light-gray); color: var(--text-color); line-height: 1.5; }
+        header { background: #fff; border-bottom: 1px solid var(--gray); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 4px rgba(0,0,0,.05); }
+        header h1 { font-size: 1.4rem; font-weight: 600; }
+        .status-badge { font-size: 0.8rem; padding: 0.3rem 0.8rem; border-radius: 1rem; font-weight: 500; }
+        .status-badge.ok { background-color: #d1e7dd; color: var(--success); }
+        .status-badge.error { background-color: #f8d7da; color: var(--danger); }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }
+        .main-card { background: #fff; border: 1px solid var(--gray); border-radius: 0.75rem; padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+        .upload-section { text-align: center; border: 2px dashed var(--gray); border-radius: 0.5rem; padding: 2rem; margin-bottom: 2rem; transition: border-color 0.2s; }
+        .upload-section:hover { border-color: var(--primary-color); }
+        .upload-section label { font-weight: 500; cursor: pointer; display: block; }
+        #file-input { display: none; }
+        #file-name { margin-top: 1rem; font-style: italic; color: var(--dark-gray); }
+        .action-buttons { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.375rem; font-size: 1rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .btn:hover { background-color: #0b5ed7; }
+        .btn:disabled { background-color: var(--dark-gray); cursor: not-allowed; }
+        .btn-secondary { background-color: var(--dark-gray); }
+        .btn-secondary:hover { background-color: #5c636a; }
+        .spinner { display: none; width: 1.2rem; height: 1.2rem; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 0.75rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; }
+        .results-card { background: #fff; border: 1px solid var(--gray); border-radius: 0.5rem; padding: 1.5rem; display: none; }
+        .results-card h2 { margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 0.75rem; margin-bottom: 1rem; }
+        .results-content { min-height: 100px; font-family: "SF Mono", "Fira Code", "Consolas", monospace; font-size: 0.85rem; }
+        .results-content img { max-width: 100%; border: 1px solid var(--gray); border-radius: 0.25rem; margin-top: 1rem; }
+        .results-content pre { background-color: var(--light-gray); padding: 1rem; border-radius: 0.25rem; white-space: pre-wrap; word-wrap: break-word; }
+        .placeholder { color: var(--dark-gray); display: flex; align-items: center; justify-content: center; height: 100%; }
+        /* New styles for refined output */
+        .prediction-badge { padding: 0.25rem 0.75rem; border-radius: 1rem; font-weight: 600; display: inline-block; }
+        .prediction-badge.success { background-color: #d1e7dd; color: var(--success); }
+        .prediction-badge.danger { background-color: #f8d7da; color: var(--danger); }
+        .progress-container { background-color: #e9ecef; border-radius: 0.25rem; height: 0.6rem; overflow: hidden; }
+        .progress-bar { height: 100%; transition: width 0.5s ease; }
+        .prob-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-top: 0.4rem; color: var(--dark-gray); border-bottom: 1px dashed #eee; padding-bottom: 0.2rem; }
+        .gradcam-caption { margin-top: 1rem; font-size: 0.85rem; color: var(--text-color); background: var(--light-gray); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--gray); }
+        
+        /* Toggle Switch & Grid */
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; vertical-align: middle; margin-right: 10px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .controls-bar { margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; background: #fff; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--gray); }
+        .views-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .view-box { text-align: center; }
+        .view-box h4 { margin-bottom: 0.5rem; color: var(--dark-gray); }
+        .view-box img { max-width: 100%; border: 1px solid var(--gray); border-radius: 0.25rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        /* Info Section & Footer */
+        .info-section { margin-top: 3rem; background: #fff; padding: 2rem; border-radius: 0.75rem; border: 1px solid var(--gray); }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+        .info-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
+        .info-card p { font-size: 0.9rem; color: var(--dark-gray); line-height: 1.6; }
+        footer { margin-top: 3rem; text-align: center; padding: 2rem; color: var(--dark-gray); font-size: 0.85rem; border-top: 1px solid var(--gray); }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) { 
+            header { flex-direction: column; gap: 1rem; text-align: center; }
+            .results-grid { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
+            .btn { width: 100%; }
+            .container { padding: 0 1rem; margin: 1rem auto; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🫁 Explainable 3D Chest CT Imaging System</h1>
+    <div id="status-badge" class="status-badge">Checking...</div>
+</header>
+
+<div class="container">
+    <div class="main-card">
+        <div class="upload-section" id="upload-area">
+            <label for="file-input">
+                <strong>Click to upload a CT scan</strong>
+                <p style="font-weight: 400; font-size: 0.9rem; color: var(--dark-gray)">Supports .nii and .nii.gz files</p>
+            </label>
+            <input type="file" id="file-input" accept=".nii,.nii.gz">
+            <div id="file-name">No file selected</div>
+        </div>
+        <div class="action-buttons">
+            <button id="predict-btn" class="btn" disabled>Run Prediction <span id="predict-spinner" class="spinner"></span></button>
+            <button id="gradcam-btn" class="btn" disabled>Generate Grad-CAM <span id="gradcam-spinner" class="spinner"></span></button>
+            <button id="clear-btn" class="btn btn-secondary" style="display: none;">Clear</button>
+        </div>
+    </div>
+
+    <div class="results-grid">
+        <div class="results-card" id="predict-card">
+            <h2>Prediction Results</h2>
+            <div class="results-content" id="predict-results"><div class="placeholder">Awaiting prediction...</div></div>
+        </div>
+        <div class="results-card" id="gradcam-card">
+            <h2>Grad-CAM Explanation</h2>
+            <div class="results-content" id="gradcam-results"><div class="placeholder">Awaiting Grad-CAM...</div></div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem;">System Information</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>🧠 3D CNN Architecture</h3>
+                <p>This system utilizes a custom ResNet-style 3D Convolutional Neural Network trained on volumetric CT data to identify pulmonary nodules with high precision. It processes the full spatial context of the scan.</p>
+            </div>
+            <div class="info-card">
+                <h3>🔍 Explainable AI (XAI)</h3>
+                <p>Integrated Grad-CAM technology provides visual transparency, highlighting the exact voxels influencing the model's prediction across Axial, Coronal, and Sagittal planes.</p>
+            </div>
+            <div class="info-card">
+                <h3>🛡️ Privacy & Security</h3>
+                <p>All processing is performed locally on the secure inference server. Uploaded NIfTI scans are processed in memory and are not permanently stored, ensuring patient data privacy.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2024 Medical AI Research Lab. For research and educational purposes only. Not approved for clinical diagnosis.</p>
+</footer>
+
+<script>
+    const fileInput = document.getElementById('file-input');
+    const fileNameDiv = document.getElementById('file-name');
+    const predictBtn = document.getElementById('predict-btn');
+    const gradcamBtn = document.getElementById('gradcam-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    let currentGradCamData = null;
+
+    async function checkHealth() {
+        const statusBadge = document.getElementById('status-badge');
+        try {
+            const response = await fetch('/health');
+            const data = await response.json();
+            statusBadge.textContent = `Model: ${data.model_status} (${data.device})`;
+            statusBadge.className = 'status-badge ok';
+        } catch (e) {
+            statusBadge.textContent = 'Backend Unreachable';
+            statusBadge.className = 'status-badge error';
+        }
+    }
+
+    async function runAction(action) {
+        if (!fileInput.files[0]) { alert('Please select a file first.'); return; }
+        
+        const resultsCard = document.getElementById(`${action}-card`);
+        resultsCard.style.display = 'block';
+
+        const spinner = document.getElementById(`${action}-spinner`);
+        const resultsDiv = document.getElementById(`${action}-results`);
+
+        predictBtn.disabled = true;
+        gradcamBtn.disabled = true;
+        spinner.style.display = 'inline-block';
+        resultsDiv.innerHTML = 'Processing... This may take a moment.';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const response = await fetch(`/${action}`, { method: 'POST', body: formData });
+            if (!response.ok) {
+                throw new Error(`Server responded with ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (action === 'predict') {
+                const isNodule = data.class_name === 'Nodule';
+                const badgeClass = isNodule ? 'danger' : 'success';
+                const confidencePct = (data.confidence * 100).toFixed(1);
+                
+                let probsHtml = '';
+                for (const [key, val] of Object.entries(data.probabilities)) {
+                    probsHtml += `
+                        <div class="prob-row">
+                            <span>${key}</span>
+                            <span>${(val * 100).toFixed(2)}%</span>
+                        </div>`;
+                }
+
+                resultsDiv.innerHTML = `
+                    <div style="margin-bottom: 1.5rem; text-align: center;">
+                        <span class="prediction-badge ${badgeClass}" style="font-size: 1.2rem; margin-bottom: 0.5rem;">${data.class_name}</span>
+                        <div style="font-size: 0.9rem; color: var(--dark-gray);">Confidence: <strong>${confidencePct}%</strong></div>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${confidencePct}%; background-color: var(--${badgeClass});"></div>
+                        </div>
+                    </div>
+                    <div style="background: var(--light-gray); padding: 1rem; border-radius: 0.5rem;">
+                        <strong style="font-size: 0.8rem; color: var(--dark-gray); text-transform: uppercase; letter-spacing: 0.5px;">Probability Distribution</strong>
+                        <div style="margin-top: 0.5rem;">${probsHtml}</div>
+                    </div>
+                `;
+            } else if (action === 'gradcam') {
+                currentGradCamData = data;
+                resultsDiv.innerHTML = `
+                    <div class="controls-bar">
+                        <label class="switch">
+                            <input type="checkbox" id="heatmap-toggle" checked onchange="toggleHeatmap(this.checked)">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="font-weight: 500; font-size: 0.9rem;">Show Heatmap Overlay</span>
+                    </div>
+                    <div class="views-grid">
+                        <div class="view-box">
+                            <h4>Axial</h4>
+                            <img id="img-axial" src="data:image/gif;base64,${data.axial.overlay}" />
+                        </div>
+                        <div class="view-box">
+                            <h4>Coronal</h4>
+                            <img id="img-coronal" src="data:image/gif;base64,${data.coronal.overlay}" />
+                        </div>
+                        <div class="view-box">
+                            <h4>Sagittal</h4>
+                            <img id="img-sagittal" src="data:image/gif;base64,${data.sagittal.overlay}" />
+                        </div>
+                    </div>
+                    <div class="gradcam-caption">
+                        <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">3D Visualization (Animated):</h4>
+                        <p style="margin-bottom: 0.5rem;">The <span style="color: var(--danger); font-weight: bold;">RED</span> highlights indicate the regions most important to the AI's prediction.</p>
+                        <ul style="padding-left: 1.2rem; margin: 0; color: var(--dark-gray);">
+                            <li><strong>Axial:</strong> Top-down view</li>
+                            <li><strong>Coronal:</strong> Front-facing view</li>
+                            <li><strong>Sagittal:</strong> Side view</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            resultsDiv.innerHTML = `<div style="color: var(--danger);">An error occurred: ${error.message}</div>`;
+        } finally {
+            if (fileInput.files[0]) {
+                predictBtn.disabled = false;
+                gradcamBtn.disabled = false;
+            }
+            spinner.style.display = 'none';
+        }
+    }
+
+    function toggleHeatmap(checked) {
+        if (!currentGradCamData) return;
+        const type = checked ? 'overlay' : 'raw';
+        document.getElementById('img-axial').src = `data:image/gif;base64,${currentGradCamData.axial[type]}`;
+        document.getElementById('img-coronal').src = `data:image/gif;base64,${currentGradCamData.coronal[type]}`;
+        document.getElementById('img-sagittal').src = `data:image/gif;base64,${currentGradCamData.sagittal[type]}`;
+    }
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            fileNameDiv.textContent = fileInput.files[0].name;
+            predictBtn.disabled = false;
+            gradcamBtn.disabled = false;
+            clearBtn.style.display = 'inline-flex';
+            predictBtn.onclick = () => runAction('predict');
+            gradcamBtn.onclick = () => runAction('gradcam');
+        } else {
+            resetUI();
+        }
+    });
+
+    clearBtn.addEventListener('click', () => {
+        fileInput.value = '';
+        resetUI();
+    });
+
+    function resetUI() {
+        fileNameDiv.textContent = 'No file selected';
+        predictBtn.disabled = true;
+        gradcamBtn.disabled = true;
+        clearBtn.style.display = 'none';
+        document.getElementById('predict-card').style.display = 'none';
+        document.getElementById('gradcam-card').style.display = 'none';
+        document.getElementById('predict-results').innerHTML = '<div class="placeholder">Awaiting prediction...</div>';
+        document.getElementById('gradcam-results').innerHTML = '<div class="placeholder">Awaiting Grad-CAM...</div>';
+    }
+
+    document.addEventListener('DOMContentLoaded', checkHealth);
+</script>
+
+</body>
+</html>
